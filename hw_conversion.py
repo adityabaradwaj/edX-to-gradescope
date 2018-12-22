@@ -7,16 +7,20 @@ import traceback
 from unidecode import unidecode
 import mpmath
 import argparse
+import zipfile
+import tarfile
+import shutil
+import os.path
 
 # For python code form edX
 import random
 
 # This is the base folder of the class data.
 path_to_class_data = './course/'
-path_to_output = "./a/"
+path_to_output = "./output/"
 
 
-def main():
+def hw_conversion():
     # v = make_assignment_from_vertical_names(hw0_vertical_names)
     url_name = get_course_url_name()
     chapters = get_course_chapters(url_name)
@@ -346,4 +350,38 @@ def format_python_code(text):
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description="Converts edX homework to a Gradescope Online Submission.")
+    parser.add_argument("class_data", type=str, nargs=1,
+                        help="Either the extracted folder of the class data or the compressed file of the course data.")
+    parser.add_argument("output_path", type=str, nargs='?', default=path_to_output,
+                        help="Output path of Gradescope files.")
+    args = parser.parse_args()
+    path_to_class_data = args.class_data[0]
+    path_to_output = args.output_path
+    temp_path = None
+    is_tar = tarfile.is_tarfile(path_to_class_data)
+    is_zip = zipfile.is_zipfile(path_to_class_data)
+    if is_tar or is_zip:
+        print("Unzipping file...")
+        temp_path = "./temp_course/"
+        if os.path.exists(temp_path):
+            shutil.rmtree(temp_path)
+        os.mkdir(temp_path)
+        if is_tar:
+            tar_ref = tarfile.open(path_to_class_data, 'r|*')
+            tar_ref.extractall(temp_path)
+            tar_ref.close()
+            # with tarfile.TarFile(path_to_class_data, 'r|gz') as tar_ref:
+            #     tar_ref.extractall(temp_path)
+        elif is_zip:
+            with zipfile.ZipFile(path_to_class_data, 'r') as zip_ref:
+                zip_ref.extractall(temp_path)
+        else:
+            raise Exception("Unsupported compression format!")
+        path_to_class_data = temp_path
+        print("Unzipping file...Done!")
+    if not os.path.exists(path_to_output):
+        os.mkdir(path_to_output)
+    hw_conversion()
+    if temp_path is not None:
+        shutil.rmtree(temp_path)
