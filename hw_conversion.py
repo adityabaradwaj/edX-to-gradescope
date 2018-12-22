@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 from pprint import pprint
 import os
@@ -203,7 +204,11 @@ def convert_latex_format(text):
 
 
 def convert_img_format(img_src):
-    return '![](https://rawgit.com/AdityaB97/cs188/master{})'.format(evaluate_variables(img_src))
+    return '![]({})'.format(evaluate_variables(img_src))
+
+
+def convert_link_format(inner_text, link_src):
+    return '[{}]({})'.format(inner_text, link_src)
 
 
 def convert_numericalresponse_format(answer):
@@ -316,6 +321,10 @@ def convert_tag(tag, tic):
     elif tag.name == 'img':
         text = convert_img_format(tag['src'])
         text += '\n\n'
+    elif tag.name == "a":
+        children_text = ''.join([convert_tag(child, tic) for child in tag.children if child != '\n'])
+        text = convert_link_format(children_text, tag['href'])
+        return text
     elif tag.name == 'numericalresponse' or tag.name == 'stringresponse':
         text = convert_numericalresponse_format(tag['answer'])
         text += '\n\n'
