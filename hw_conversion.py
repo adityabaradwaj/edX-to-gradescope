@@ -6,6 +6,7 @@ import re
 import traceback
 from unidecode import unidecode
 import mpmath
+import argparse
 
 # For python code form edX
 import random
@@ -22,13 +23,15 @@ def main():
     for chapter in chapters:
         assignment_title, sequentials = get_sequentials_from_chapter(chapter)
         assignment_title = re.sub("[\\/:\"*?<>|]+", "", assignment_title)
-        print(assignment_title)
+        print("Generating {}...".format(assignment_title))
         assignment_file = open(path_to_output + assignment_title + ".txt", "w")
         for seq in sequentials:
             verticals = get_verticals_from_sequential(seq)
             assignment_data = make_assignment_from_vertical_names(verticals)
             assignment_file.write(assignment_data)
         assignment_file.close()
+        print("Generating {}...Done!".format(assignment_title))
+    print("Finished!")
 
 
 def get_course_url_name():
@@ -65,6 +68,7 @@ def get_verticals_from_sequential(sequential):
     with open(path_to_verticals) as f:
         soup = BeautifulSoup(f, 'html.parser')
     return [vert["url_name"] for vert in soup.find_all("vertical")]
+
 
 def make_assignment_from_vertical_names(vertical_names):
     output = ""
@@ -123,9 +127,11 @@ def make_assignment_from_vertical_names(vertical_names):
         # print('\n\n\n--------------------------------------------------------------------\n\n\n')
     return output
 
+
 class TableIndexCounter:
     def __init__(self):
         self.table_index = 0
+
 
 class TableEntryProcessor:
     def __init__(self, tic):
@@ -172,6 +178,7 @@ class TableEntryProcessor:
             table = BeautifulSoup(text, 'html.parser').find('table')
             text = self.process_nested_table(table)
         return text
+
 
 def evaluate_variable(match):
     matched_text = match.group(0)[1:]
@@ -279,6 +286,7 @@ def convert_table_format(table, tic):
         
     return output_string
 
+
 def convert_tag(tag, tic):
     if tag.name == 'table':
         text = convert_table_format(tag, tic)
@@ -326,13 +334,16 @@ def convert_tag(tag, tic):
         
     return text + ''.join([convert_tag(child, tic) for child in tag.children if child != '\n'])
 
+
 def find(name, path):
     for root, dirs, files in os.walk(path):
         if name in files:
             return os.path.join(root, name)
-        
+
+
 def format_python_code(text):
-    return text.replace('&gt;', '>').replace('&lt;', '<').replace('&amp;', '&').replace("\t", "    ")
+    return text.replace('&gt;', '>').replace('&lt;', '<').replace('&amp;', '&').replace("\t", " " * 4)
+
 
 if __name__ == '__main__':
     main()
