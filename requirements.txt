@@ -1,0 +1,3 @@
+unidecode
+bs4
+mpmath
