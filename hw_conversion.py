@@ -94,8 +94,12 @@ def make_assignment_from_vertical_names(vertical_names):
                 path_to_problem = find('{}.html'.format(problem_url_name), path_to_class_data)
             else:
                 raise Exception('fuck up')
-            with open(path_to_problem, encoding="utf8") as f:
-                problem_soup = BeautifulSoup(f, 'html.parser')
+            try:
+                with open(path_to_problem, encoding="utf8") as f:
+                    problem_soup = BeautifulSoup(f, 'html.parser')
+            except Exception:
+                with open(path_to_problem) as f:
+                    problem_soup = BeautifulSoup(f, 'html.parser')
 
             for tag in problem_soup.find_all('solution'):
                 tag.clear()
