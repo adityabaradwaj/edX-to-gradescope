@@ -10,6 +10,7 @@ import mpmath
 # For python code form edX
 import random
 
+# This is the base folder of the class data.
 path_to_class_data = './course/'
 
 hw0_vertical_names = [
@@ -17,11 +18,46 @@ hw0_vertical_names = [
 ]
 
 def main():
-    v = make_assignment_from_vertical_names(hw0_vertical_names)
-    print(v)
-#
-# def get_course_info():
-#
+    # v = make_assignment_from_vertical_names(hw0_vertical_names)
+    url_name = get_course_url_name()
+    chapters = get_course_chapters(url_name)
+    for chapter in chapters:
+        sequentials = get_sequentials_from_chapter(chapter)
+        for seq in sequentials:
+            verticals = get_verticals_from_sequential(seq)
+
+
+def get_course_url_name():
+    path_to_course_xml = find("course.xml", path_to_class_data)
+    if path_to_course_xml is None:
+        raise Exception("Could not find the main course xml file!")
+    with open(path_to_course_xml) as f:
+        soup = BeautifulSoup(f, 'html.parser')
+    return soup.find("course")["url_name"]
+
+def get_course_chapters(url_name):
+    path_to_course_chapters = find("{}.xml".format(url_name), path_to_class_data)
+    if path_to_course_chapters is None:
+        raise Exception("Could not find the chapters data!")
+    with open(path_to_course_chapters) as f:
+        soup = BeautifulSoup(f, 'html.parser')
+    return [chapter["url_name"] for chapter in soup.find_all("chapter")]
+
+def get_sequentials_from_chapter(chapter):
+    path_to_sequentials = find("{}.xml".format(chapter), path_to_class_data)
+    if path_to_sequentials is None:
+        raise Exception("Could not find sequential data file!")
+    with open(path_to_sequentials) as f:
+        soup = BeautifulSoup(f, 'html.parser')
+    return [seq["url_name"] for seq in soup.find_all("sequential")]
+
+def get_verticals_from_sequential(sequential):
+    path_to_verticals = find("{}.xml".format(sequential), path_to_class_data)
+    if path_to_verticals is None:
+        raise Exception("Could not find vertical data file!")
+    with open(path_to_verticals) as f:
+        soup = BeautifulSoup(f, 'html.parser')
+    return [vert["url_name"] for vert in soup.find_all("vertical")]
 
 def make_assignment_from_vertical_names(vertical_names):
     output = ""
