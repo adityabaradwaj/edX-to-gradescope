@@ -12,19 +12,23 @@ import random
 
 # This is the base folder of the class data.
 path_to_class_data = './course/'
+path_to_output = "./a/"
 
-hw0_vertical_names = [
-    '0a2f8de6f572445188b5353a69927997',
-]
 
 def main():
     # v = make_assignment_from_vertical_names(hw0_vertical_names)
     url_name = get_course_url_name()
     chapters = get_course_chapters(url_name)
     for chapter in chapters:
-        sequentials = get_sequentials_from_chapter(chapter)
+        assignment_title, sequentials = get_sequentials_from_chapter(chapter)
+        assignment_title = re.sub("[\\/:\"*?<>|]+", "", assignment_title)
+        print(assignment_title)
+        assignment_file = open(path_to_output + assignment_title + ".txt", "w")
         for seq in sequentials:
             verticals = get_verticals_from_sequential(seq)
+            assignment_data = make_assignment_from_vertical_names(verticals)
+            assignment_file.write(assignment_data)
+        assignment_file.close()
 
 
 def get_course_url_name():
@@ -35,6 +39,7 @@ def get_course_url_name():
         soup = BeautifulSoup(f, 'html.parser')
     return soup.find("course")["url_name"]
 
+
 def get_course_chapters(url_name):
     path_to_course_chapters = find("{}.xml".format(url_name), path_to_class_data)
     if path_to_course_chapters is None:
@@ -43,13 +48,15 @@ def get_course_chapters(url_name):
         soup = BeautifulSoup(f, 'html.parser')
     return [chapter["url_name"] for chapter in soup.find_all("chapter")]
 
+
 def get_sequentials_from_chapter(chapter):
     path_to_sequentials = find("{}.xml".format(chapter), path_to_class_data)
     if path_to_sequentials is None:
         raise Exception("Could not find sequential data file!")
     with open(path_to_sequentials) as f:
         soup = BeautifulSoup(f, 'html.parser')
-    return [seq["url_name"] for seq in soup.find_all("sequential")]
+    return soup.find("chapter")["display_name"], [seq["url_name"] for seq in soup.find_all("sequential")]
+
 
 def get_verticals_from_sequential(sequential):
     path_to_verticals = find("{}.xml".format(sequential), path_to_class_data)
@@ -68,7 +75,7 @@ def make_assignment_from_vertical_names(vertical_names):
         with open(path_to_vertical) as f:
             soup = BeautifulSoup(f, 'html.parser')
         
-        vertical_display_name = soup.find_all('vertical')[0]['display_name']
+        # vertical_display_name = soup.find_all('vertical')[0]['display_name']
         problem_url_names_and_types = [(tag['url_name'], tag.name) for tag in soup.find_all(['problem', 'html'])]
         for part_index, problem_url_name_and_type in enumerate(problem_url_names_and_types):
             problem_url_name, problem_url_type = problem_url_name_and_type
@@ -78,7 +85,7 @@ def make_assignment_from_vertical_names(vertical_names):
                 path_to_problem = find('{}.html'.format(problem_url_name), path_to_class_data)
             else:
                 raise Exception('fuck up')
-            with open(path_to_problem) as f:
+            with open(path_to_problem, encoding="utf8") as f:
                 problem_soup = BeautifulSoup(f, 'html.parser')
 
             for tag in problem_soup.find_all('solution'):
@@ -97,6 +104,7 @@ def make_assignment_from_vertical_names(vertical_names):
             try:
                 problem_text = convert_tag(problem_soup, tic)
             except Exception as e:
+                problem_text = None
                 print(e)
                 print(traceback.format_exc())
                 print('ERROR WITH TRANSLATING: ', problem_url_name)
@@ -106,7 +114,8 @@ def make_assignment_from_vertical_names(vertical_names):
                 # print('---------------------\n\n')
                 # print('Part {}'.format(part_index + 1))
             # print(problem_text)
-            output += problem_text + "\n"
+            if problem_text is not None:
+                output += problem_text + "\n"
         output += '\n$$\\phantom{\\rule{0em}{10em}}$$\n___\n\n\n\n' \
                   '--------------------------------------------------------------------\n\n\n'
         # print('\n$$\\phantom{\\rule{0em}{10em}}$$')
@@ -287,8 +296,11 @@ def convert_tag(tag, tic):
             weight = tag['weight']
         else:
             weight = 1
-        text = tag['display_name'] + ' ' + str(weight)
-        text += '\n\n'
+        try:
+            text = tag['display_name'] + ' ' + str(weight)
+            text += '\n\n'
+        except Exception:
+            text = ""
     elif tag.name == 'img':
         text = convert_img_format(tag['src'])
         text += '\n\n'
@@ -320,7 +332,7 @@ def find(name, path):
             return os.path.join(root, name)
         
 def format_python_code(text):
-    return text.replace('&gt;', '>').replace('&lt;', '<').replace('&amp;', '&')
+    return text.replace('&gt;', '>').replace('&lt;', '<').replace('&amp;', '&').replace("\t", "    ")
 
 if __name__ == '__main__':
     main()
