@@ -10,18 +10,21 @@ import mpmath
 # For python code form edX
 import random
 
-path_to_class_data = './course_su18/'
+path_to_class_data = './course/'
 
 hw0_vertical_names = [
-    '60fb25d0e9f0487dad5d91a1ef501fd9',
-    '908da8a3abda4a019e8e42416ae61555',
+    '0a2f8de6f572445188b5353a69927997',
 ]
 
 def main():
-    make_assignment_from_vertical_names(hw0_vertical_names)
+    v = make_assignment_from_vertical_names(hw0_vertical_names)
+    print(v)
+#
+# def get_course_info():
+#
 
 def make_assignment_from_vertical_names(vertical_names):
-    
+    output = ""
     for vertical_name in vertical_names:
         path_to_vertical = find('{}.xml'.format(vertical_name), path_to_class_data)
         if path_to_vertical is None:
@@ -63,13 +66,17 @@ def make_assignment_from_vertical_names(vertical_names):
                 print('ERROR WITH TRANSLATING: ', problem_url_name)
             
             if part_index != 0:
-                print('---------------------\n\n')
-                print('Part {}'.format(part_index + 1))
-            print(problem_text)
-        
-        print('\n$$\\phantom{\\rule{0em}{10em}}$$')
-        print('___')
-        print('\n\n\n--------------------------------------------------------------------\n\n\n')
+                output += '---------------------\n\n\nPart {}\n'.format(part_index + 1)
+                # print('---------------------\n\n')
+                # print('Part {}'.format(part_index + 1))
+            # print(problem_text)
+            output += problem_text + "\n"
+        output += '\n$$\\phantom{\\rule{0em}{10em}}$$\n___\n\n\n\n' \
+                  '--------------------------------------------------------------------\n\n\n'
+        # print('\n$$\\phantom{\\rule{0em}{10em}}$$')
+        # print('___')
+        # print('\n\n\n--------------------------------------------------------------------\n\n\n')
+    return output
 
 class TableIndexCounter:
     def __init__(self):
