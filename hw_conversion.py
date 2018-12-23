@@ -29,7 +29,10 @@ def hw_conversion():
         assignment_title, sequentials = get_sequentials_from_chapter(chapter)
         assignment_title = re.sub("[\\/:\"*?<>|]+", "", assignment_title)
         print("Generating {}...".format(assignment_title))
-        assignment_file = open(path_to_output + assignment_title + ".txt", "w")
+        try:
+            assignment_file = open(path_to_output + assignment_title + ".txt", "w", encoding="UTF-8")
+        except Exception:
+            assignment_file = open(path_to_output + assignment_title + ".txt", "w")
         for seq in sequentials:
             verticals = get_verticals_from_sequential(seq)
             assignment_data = make_assignment_from_vertical_names(verticals)
@@ -101,8 +104,8 @@ def make_assignment_from_vertical_names(vertical_names):
                 with open(path_to_problem) as f:
                     problem_soup = BeautifulSoup(f, 'html.parser')
 
-            for tag in problem_soup.find_all('solution'):
-                tag.clear()
+            # for tag in problem_soup.find_all('solution'):
+            #     tag.clear()
 
             script = problem_soup.find(['script'])
             if script:
@@ -301,6 +304,8 @@ def convert_table_format(table, tic):
 
 
 def convert_tag(tag, tic):
+    if tag is None:
+        return ""
     if tag.name == 'table':
         text = convert_table_format(tag, tic)
         text += '\n\n'
@@ -326,7 +331,7 @@ def convert_tag(tag, tic):
         text = convert_img_format(tag['src'])
         text += '\n\n'
     elif tag.name == "a":
-        children_text = ''.join([convert_tag(child, tic) for child in tag.children if child != '\n'])
+        children_text = ''.join([convert_tag(child, tic) for child in tag.children if child != '\n']).replace("\n\n", "")
         text = convert_link_format(children_text, tag['href'])
         return text
     elif tag.name == 'numericalresponse' or tag.name == 'stringresponse':
@@ -336,6 +341,13 @@ def convert_tag(tag, tic):
         text = convert_latex_format(convert_choiceresponse_format(tag))
         text += '\n\n'
         return text
+    elif tag.name == 'solution':
+        children = ["[[{}]]\n".format(convert_tag(child, tic)) for child in tag.children if child != '\n']
+        pretext = ''.join(children)
+        text = remove_newline_in_double_brackets(pretext).replace("[[]]", "")
+        pass
+    elif tag.name == 'p' and tag.text.lower() == 'explanation':
+        return ""
     elif tag.name == 'textline':
         if not tag.has_attr('correct_answer'):
             text = ''
@@ -361,6 +373,27 @@ def find(name, path):
 def format_python_code(text):
     return text.replace('&gt;', '>').replace('&lt;', '<').replace('&amp;', '&').replace("\t", " " * 4)
 
+
+def remove_newline_in_double_brackets(text):
+    new_string = ""
+    in_exp = 0
+    prev_char = ""
+    for char in text:
+        if in_exp > 0:
+            if char != "\n":
+                new_string += char
+            else:
+                if prev_char == "\n":
+                    new_string += "]]\n\n[["
+        else:
+            new_string += char
+
+        if char == "[" and prev_char == "[":
+            in_exp += 1
+        if char == "]" and prev_char == "]":
+            in_exp -= 1
+        prev_char = char
+    return new_string
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Converts edX homework to a Gradescope Online Submission.")
