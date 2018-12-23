@@ -384,7 +384,7 @@ def remove_newline_in_double_brackets(text):
                 new_string += char
             else:
                 if prev_char == "\n":
-                    new_string += "]]\n\n[["
+                    new_string += "]]\n[["
         else:
             new_string += char
 
