@@ -345,7 +345,7 @@ def convert_tag(tag, tic):
         children = ["[[{}]]\n".format(convert_tag(child, tic)) for child in tag.children if child != '\n']
         pretext = ''.join(children)
         text = remove_newline_in_double_brackets(pretext).replace("[[]]", "")
-        pass
+        return text
     elif tag.name == 'p' and tag.text.lower() == 'explanation':
         return ""
     elif tag.name == 'textline':
