@@ -1,3 +1,11 @@
+"""
+/*
+ * @Author: ThaumicMekanism [Stephan K.] 
+ * @Date: 2018-12-21 00:00:00 
+ * @Last Modified by: ThaumicMekanism [Stephan K.]
+ * @Last Modified time: 2020-01-23 20:52:21
+ */
+ """
 from __future__ import print_function
 import sys
 from pprint import pprint
